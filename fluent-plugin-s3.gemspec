@@ -23,4 +23,5 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency "test-unit", ">= 3.0.8"
   gem.add_development_dependency "test-unit-rr", ">= 1.0.3"
   gem.add_development_dependency "timecop"
+  gem.add_development_dependency "oj"
 end
