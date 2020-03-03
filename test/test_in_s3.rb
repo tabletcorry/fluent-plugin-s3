@@ -510,4 +510,46 @@ EOS
     ]
     assert_equal(expected_records, events.map {|_tag, _time, record| record })
   end
+
+  def test_one_record_sns
+    setup_mocks
+    config = CONFIG + "\ncheck_apikey_on_start false\nstore_as text\nformat none\n"
+    config = config.gsub("123456789123\n", "123456789123\nassume_sns true\n")
+    d = create_driver(config)
+
+    s3_object = stub(Object.new)
+    s3_response = stub(Object.new)
+    s3_response.body { StringIO.new("aaa") }
+    s3_object.get { s3_response }
+    @s3_bucket.object(anything).at_least(1) { s3_object }
+
+    body = {
+        "Records" => [
+            {
+                "s3" => {
+                    "object" => {
+                        "key" => "test_key"
+                    }
+                }
+            }
+        ]
+    }
+
+    sns_wrapper = {
+        "Message" => Yajl.dump(body)
+    }
+
+    message = Struct::StubMessage.new(1, 1, Yajl.dump(sns_wrapper))
+    @sqs_poller.get_messages(anything, anything) do |config, stats|
+      config.before_request.call(stats) if config.before_request
+      stats.request_count += 1
+      if stats.request_count >= 1
+        d.instance.instance_variable_set(:@running, false)
+      end
+      [message]
+    end
+    d.run(expect_emits: 1)
+    events = d.events
+    assert_equal({ "message" => "aaa" }, events.first[2])
+  end
 end

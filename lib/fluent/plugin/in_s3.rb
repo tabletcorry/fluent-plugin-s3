@@ -184,7 +184,7 @@ module Fluent::Plugin
           begin
             body = Yajl.load(message.body)
             log.debug(body)
-            if @assume_sns
+            if @sqs.assume_sns
               next unless body["Message"]
               body = Yajl.load(body["Message"])
             end
