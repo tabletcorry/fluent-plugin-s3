@@ -295,6 +295,7 @@ module Fluent::Plugin
       s3 = body["Records"].first["s3"]
       raw_key = s3["object"]["key"]
       key = CGI.unescape(raw_key)
+      log.debug("Processing key: #{raw_key}")
 
       io = @bucket.object(key).get.body
       content = @extractor.extract(io)
@@ -309,6 +310,7 @@ module Fluent::Plugin
         end
       end
       router.emit_stream(@tag, es)
+      log.debug("Completed processing key: #{raw_key}")
     end
 
     class Extractor
